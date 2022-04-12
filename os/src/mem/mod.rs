@@ -55,13 +55,15 @@ lazy_static! {
 
 pub const MEMORY_END: usize = 0x80800000;
 
-fn init_bss() {
+pub fn clean_bss() {
+    info!("cleaning");
     unsafe {
         core::slice::from_raw_parts_mut(
             *S_BSS as *mut u8, 
             *E_BSS - *S_BSS
         ).fill(0);
     }
+    info!("clean done");
 }
 
 
@@ -80,7 +82,6 @@ pub fn log_memory_space() {
 
 /// initiate heap allocator, frame allocator and kernel space
 pub fn init() {
-    // init_bss();
     heap_allocator::init_heap();
     // frame_allocator::init_frame_allocator();
     // KERNEL_SPACE.exclusive_access().activate();

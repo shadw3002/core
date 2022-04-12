@@ -35,7 +35,12 @@ global_asm!(include_str!("entry.asm"));
 #[no_mangle] // 不混淆符号名
 pub fn main_dispatcher(hart_id: usize, _device_tree_paddr: usize) -> ! {
     unsafe { cpu::set_cpu_id(hart_id); }
-    logging::init();
+
+    static EARLY_BLOCK_INIT: spin::Once<()> = spin::Once::new();
+    EARLY_BLOCK_INIT.call_once(||{
+        mem::clean_bss();
+        logging::init();
+    });
 
     // TODO: guest PRIMARY_HART_ID
     if hart_id == PRIMARY_HART_ID {

@@ -38,11 +38,8 @@ impl Log for Logger {
 
 // spin once
 pub fn init() {
-    static LOGGER_INIT: spin::Once<()> = spin::Once::new();
-    LOGGER_INIT.call_once(||{
-        // TODO: level control
-        log::set_logger(&*LOGGER).err().map(|err| panic!("set logger: {}", err));
-        log::set_max_level(LevelFilter::Info); 
-        info!("logger init done: {:#x}", &LOGGER as *const _ as usize);
-    });
+    // TODO: level control
+    log::set_logger(&*LOGGER).err().map(|err| panic!("set logger: {}", err));
+    log::set_max_level(LevelFilter::Info); 
+    info!("logger init done: {:#x}", &LOGGER as *const _ as usize);
 }
