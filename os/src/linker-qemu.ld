@@ -11,9 +11,15 @@ SECTIONS
     s_text = .;
     .text : {
         *(.text.entry)
+        . = ALIGN(4K);
+
+        s_trampoline = .;
+        *(.text.trampoline);
+        . = ALIGN(4K);
+
         *(.text .text.*)
+        . = ALIGN(4K);
     }
-    . = ALIGN(4K);
     e_text = .;
 
     /* 已初始化的全局数据 - 只读 */

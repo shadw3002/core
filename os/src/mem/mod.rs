@@ -1,12 +1,25 @@
+//! Memory management implementation
+//! 
+//! SV39 page-based virtual-memory architecture for RV64 systems, and
+//! everything about memory management, like frame allocator, page table,
+//! map area and memory set, is implemented here.
+//! 
+//! Every task or process has a memory_set to control its virtual memory.
 
 
 mod address;
 mod frame_allocator;
+mod heap_allocator;
+mod memory_set;
+mod page_table;
 
-pub use address::{PhysPageNum};
-
-
-use log::info;
+pub use address::{PhysAddr, PhysPageNum, VirtAddr, VirtPageNum};
+use address::{StepByOne, VPNRange};
+pub use frame_allocator::{frame_alloc, FrameTracker};
+pub use memory_set::remap_test;
+pub use memory_set::{MapPermission, MemorySet, KERNEL_SPACE};
+pub use page_table::{translated_byte_buffer, PageTableEntry};
+use page_table::{PTEFlags, PageTable};
 
 extern "C" {
     fn s_bss();
@@ -19,6 +32,7 @@ extern "C" {
     fn e_data();
     fn s_kernel();
     fn e_kernel();
+    fn s_trampoline();
 }
 
 use lazy_static::lazy_static;
@@ -33,6 +47,7 @@ lazy_static! {
     pub static ref E_DATA: usize = e_data as usize;
     pub static ref S_KERNEL: usize = s_kernel as usize;
     pub static ref E_KERNEL: usize = e_kernel as usize;
+    pub static ref S_TRAMPOLINE: usize = s_trampoline as usize;
 }
 
 pub const MEMORY_END: usize = 0x80800000;
@@ -44,9 +59,8 @@ fn init_bss() {
     }
 }
 
-pub fn init() {
-    init_bss()
-}
+
+use log::info;
 
 pub fn log_memory_space() {
     info!("kernel  base address {:#x}", s_kernel as usize);
@@ -58,3 +72,10 @@ pub fn log_memory_space() {
 }
 
 
+/// initiate heap allocator, frame allocator and kernel space
+pub fn init() {
+    init_bss();
+    heap_allocator::init_heap();
+    frame_allocator::init_frame_allocator();
+    KERNEL_SPACE.exclusive_access().activate();
+}

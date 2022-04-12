@@ -6,39 +6,63 @@
 // 通过 PanicInfo::message 获取报错信息
 #![feature(panic_info_message)]
 #![feature(core_panic)]
+#![feature(alloc_error_handler)]
+#![feature(llvm_asm)]
 
-mod sbi;
+#[macro_use]
+extern crate bitflags;
+extern crate alloc;
+
+
 #[macro_use]
 mod console;
+mod sbi;
 mod panic_handler;
 mod logging;
 mod mem;
 mod config;
+mod sync;
+mod cpu;
 
 use log::{error, info, warn};
-
-
 use core::arch::global_asm;
+
+const PRIMARY_HART_ID: usize = 0;
+
 global_asm!(include_str!("entry.asm"));
 
-extern crate alloc;
-
-fn init() {
-    info!("initialization starting:");
-    mem::init();
-    logging::init();
-    info!("initialization done.");
-}
-
-
 #[no_mangle] // 不混淆符号名
-pub fn primary_main() -> ! {
-    init();
-    mem::log_memory_space();
-    info!("hello, world!");
+pub fn main_dispatcher(hart_id: usize, _device_tree_paddr: usize) -> ! {
+    unsafe {
+        cpu::set_cpu_id(hartid);
+    }
+    
+    // TODO: guest PRIMARY_HART_ID
+    if hartid == PRIMARY_HART_ID {
+        primary_boot();
+    } else {
+        secondary_boot();
+    }
+
+    // TODO: main loop
+    // loop{}
 
     sbi::shutdown();
 }
 
+fn init() {
+    info!("initialization starting:");
+    // mem::init();
+    logging::init();
+    info!("initialization done.");
+}
 
-   
+fn primary_boot() {
+    init();
+    mem::log_memory_space();
+    info!("hello, world!");
+}
+
+fn secondary_boot() {
+
+}
