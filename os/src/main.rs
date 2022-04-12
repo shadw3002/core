@@ -38,6 +38,7 @@ pub fn main_dispatcher(hart_id: usize, _device_tree_paddr: usize) -> ! {
 
     static EARLY_BLOCK_INIT: spin::Once<()> = spin::Once::new();
     EARLY_BLOCK_INIT.call_once(||{
+        // .bss must be cleaned firstly
         mem::clean_bss();
         logging::init();
     });
