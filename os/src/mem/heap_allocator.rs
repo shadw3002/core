@@ -22,6 +22,8 @@ pub fn init_heap() {
             .lock()
             .init(HEAP_SPACE.as_ptr() as usize, KERNEL_HEAP_SIZE);
     }
+    heap_test();
+    info!("[heap allocator] init done.");
 }
 
 #[allow(unused)]
@@ -29,7 +31,7 @@ pub fn heap_test() {
     use alloc::boxed::Box;
     use alloc::vec::Vec;
     use super::{S_BSS, E_BSS};
-    
+
     let bss_range = (*S_BSS)..(*E_BSS);
     let a = Box::new(5);
     assert_eq!(*a, 5);
@@ -44,5 +46,4 @@ pub fn heap_test() {
     }
     assert!(bss_range.contains(&(v.as_ptr() as usize)));
     drop(v);
-    info!("heap_test passed!");
 }

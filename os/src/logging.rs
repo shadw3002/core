@@ -41,5 +41,5 @@ pub fn init() {
     // TODO: level control
     log::set_logger(&*LOGGER).err().map(|err| panic!("set logger: {}", err));
     log::set_max_level(LevelFilter::Info); 
-    info!("logger init done: {:#x}", &LOGGER as *const _ as usize);
+    info!("[logger] init done.");
 }

@@ -56,27 +56,25 @@ lazy_static! {
 pub const MEMORY_END: usize = 0x80800000;
 
 pub fn clean_bss() {
-    info!("cleaning");
     unsafe {
         core::slice::from_raw_parts_mut(
             *S_BSS as *mut u8, 
             *E_BSS - *S_BSS
         ).fill(0);
     }
-    info!("clean done");
 }
 
-
-
 pub fn log_memory_space() {
-    info!("kernel  base address {:#x}", s_kernel as usize);
-    info!(".text   [{:#x}, {:#x})", s_text as usize, e_text as usize);
-    info!(".rodata [{:#x}, {:#x})", s_rodata as usize, e_rodata as usize);
-    info!(".data   [{:#x}, {:#x})", s_data as usize, e_data as usize);
-    info!(".bss    [{:#x}, {:#x})", s_bss as usize, e_bss as usize);
-    info!("kernel  end  address {:#x}", e_kernel as usize);
-
-    info!("stack [{:#x}, {:#x})", *BOOT_STACK, *BOOT_STACK_TOP);
+    // TODO: entirely
+    info!("[memory layout]");
+    info!("+---kernel  base address {:#x}", s_kernel as usize);
+    info!("|---.text   [{:#x}, {:#x})", s_text as usize, e_text as usize);
+    info!("|---.rodata [{:#x}, {:#x})", s_rodata as usize, e_rodata as usize);
+    info!("|---.data   [{:#x}, {:#x})", s_data as usize, e_data as usize);
+    info!("|    +----  stack   [{:#x}, {:#x})", *BOOT_STACK, *BOOT_STACK_TOP);
+    info!("|---.bss    [{:#x}, {:#x})", s_bss as usize, e_bss as usize);
+    info!("|---kernel  end  address {:#x}", e_kernel as usize);
+    
 }
 
 
