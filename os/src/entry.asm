@@ -11,6 +11,7 @@ _start:
 
 # 分配初始化程序栈空间
 # TODO align?
+# TODO cores number?
     .section .data.boot_stack
     .globl boot_stack
 boot_stack:

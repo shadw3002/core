@@ -73,7 +73,7 @@ run-inner: build
 ifeq ($(BOARD),qemu)
 	@qemu-system-riscv64 \
 		-machine virt \
-		-smp 2\
+		-smp 1\
 		-nographic \
 		-bios $(BOOTLOADER) \
 		-device loader,file=$(KERNEL_BIN),addr=$(KERNEL_ENTRY_PA)

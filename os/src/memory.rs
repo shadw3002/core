@@ -1,4 +1,3 @@
-use log::info;
 
 extern "C" {
     fn s_bss();
@@ -11,6 +10,8 @@ extern "C" {
     fn e_data();
     fn s_kernel();
     fn e_kernel();
+    fn boot_stack();
+    fn boot_stack_top();
 }
 
 fn init_bss() {

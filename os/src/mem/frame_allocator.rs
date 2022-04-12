@@ -7,7 +7,6 @@ use crate::sync::UPSafeCell;
 use super::E_KERNEL;
 use alloc::vec::Vec;
 use core::fmt::{self, Debug, Formatter};
-use lazy_static::*;
 
 /// manage a frame which has the same lifecycle as the tracker
 pub struct FrameTracker {

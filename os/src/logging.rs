@@ -1,7 +1,4 @@
-use core::panicking::panic;
-
 use log::{Record, Level, Metadata, LevelFilter, Log};
-use lazy_static::lazy_static;
 
 lazy_static! {
     static ref LOGGER: Logger = Logger::new(Level::Info);
@@ -33,13 +30,19 @@ impl Log for Logger {
             Level::Debug => ("32", "Debug"),
             Level::Trace => ("90", "Trace"),
         };
-        println!("\x1b[{}m[{}] {}\x1b[0m", color, label, record.args());
+        let cpu_id = crate::cpu::id();
+        println!("\x1b[{}m[{}][{}] {}\x1b[0m", color, cpu_id, label, record.args());
     }
     fn flush(&self) {}
 }
 
+// spin once
 pub fn init() {
-    // println!("[logger] address: {}", &LOGGER as *const _ as  usize);
-    log::set_logger(&*LOGGER).err().map(|err| panic!("set logger: {}", err));
-    log::set_max_level(LevelFilter::Info); 
+    static LOGGER_INIT: spin::Once<()> = spin::Once::new();
+    LOGGER_INIT.call_once(||{
+        // TODO: level control
+        log::set_logger(&*LOGGER).err().map(|err| panic!("set logger: {}", err));
+        log::set_max_level(LevelFilter::Info); 
+        info!("logger init done: {:#x}", &LOGGER as *const _ as usize);
+    });
 }

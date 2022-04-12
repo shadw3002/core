@@ -12,7 +12,6 @@ use alloc::collections::BTreeMap;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::arch::asm;
-use lazy_static::*;
 use riscv::register::satp;
 
 lazy_static! {
