@@ -16,7 +16,7 @@ pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
 static mut HEAP_SPACE: [u8; KERNEL_HEAP_SIZE] = [0; KERNEL_HEAP_SIZE];
 
 /// initiate heap allocator
-pub fn init_heap() {
+pub fn init() {
     unsafe {
         HEAP_ALLOCATOR
             .lock()

@@ -8,14 +8,14 @@ use bitflags::*;
 bitflags! {
     /// page table entry flags
     pub struct PTEFlags: u8 {
-        const V = 1 << 0;
-        const R = 1 << 1;
-        const W = 1 << 2;
-        const X = 1 << 3;
-        const U = 1 << 4;
+        const V = 1 << 0; // 仅当位 V 为 1 时，页表项才是合法的
+        const R = 1 << 1; // 读
+        const W = 1 << 2; // 写
+        const X = 1 << 3; // 执行
+        const U = 1 << 4; // 控制索引到这个页表项的对应虚拟页面是否在 CPU 处于 U 特权级的情况下是否被允许访问
         const G = 1 << 5;
-        const A = 1 << 6;
-        const D = 1 << 7;
+        const A = 1 << 6; // 处理器记录自从页表项上的这一位被清零之后，页表项的对应虚拟页面是否被访问过
+        const D = 1 << 7; // 处理器记录自从页表项上的这一位被清零之后，页表项的对应虚拟页面是否被修改过
     }
 }
 
@@ -119,6 +119,8 @@ impl PageTable {
         assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping", vpn);
         *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
     }
+
+    // TODO: recycle
     #[allow(unused)]
     pub fn unmap(&mut self, vpn: VirtPageNum) {
         let pte = self.find_pte(vpn).unwrap();

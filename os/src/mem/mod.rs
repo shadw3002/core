@@ -74,15 +74,16 @@ pub fn log_memory_space() {
     info!("|    +----  stack   [{:#x}, {:#x})", *BOOT_STACK, *BOOT_STACK_TOP);
     info!("|---.bss    [{:#x}, {:#x})", s_bss as usize, e_bss as usize);
     info!("|---kernel  end  address {:#x}", e_kernel as usize);
+    info!("+---memory  end  address {:#x}", MEMORY_END);
     
 }
 
 
 /// initiate heap allocator, frame allocator and kernel space
 pub fn init() {
-    heap_allocator::init_heap();
-    // frame_allocator::init_frame_allocator();
-    // KERNEL_SPACE.exclusive_access().activate();
-
     log_memory_space();
+
+    heap_allocator::init();
+    frame_allocator::init();
+    // KERNEL_SPACE.exclusive_access().activate();
 }
