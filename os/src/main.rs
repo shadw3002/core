@@ -25,12 +25,15 @@ mod mem;
 mod config;
 mod sync;
 mod cpu;
+mod loader;
 
-use core::arch::global_asm;
+
 
 const PRIMARY_HART_ID: usize = 0;
 
+use core::arch::global_asm;
 global_asm!(include_str!("entry.asm"));
+global_asm!(include_str!("link_app.S"));
 
 #[no_mangle] // 不混淆符号名
 pub fn main_dispatcher(hart_id: usize, _device_tree_paddr: usize) -> ! {

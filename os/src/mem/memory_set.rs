@@ -7,22 +7,18 @@ use super::{StepByOne, VPNRange};
 use super::{S_TRAMPOLINE, S_TEXT, E_TEXT, S_RODATA, E_RODATA, S_DATA, E_DATA};
 use super::{S_BSS, E_BSS, S_KERNEL, E_KERNEL};
 use crate::config::{MEMORY_END, PAGE_SIZE, TRAMPOLINE, TRAP_CONTEXT, USER_STACK_SIZE};
-use crate::sync::UPSafeCell;
+
 use alloc::collections::BTreeMap;
-use alloc::sync::Arc;
+
 use alloc::vec::Vec;
 use core::arch::asm;
 use riscv::register::satp;
 
-lazy_static! {
-	/// a memory set instance through lazy_static! managing kernel space
-    pub static ref KERNEL_SPACE: Arc<UPSafeCell<MemorySet>> =
-        Arc::new(unsafe { UPSafeCell::new(MemorySet::new_kernel()) });
-}
+
 
 /// memory set structure, controls virtual-memory space
 pub struct MemorySet {
-    page_table: PageTable,
+    pub page_table: PageTable,
     areas: Vec<MapArea>,
 }
 
@@ -48,7 +44,7 @@ impl MemorySet {
             None,
         );
     }
-    fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
+    pub fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
         map_area.map(&mut self.page_table);
         if let Some(data) = data {
             map_area.copy_data(&mut self.page_table, data);
@@ -56,78 +52,14 @@ impl MemorySet {
         self.areas.push(map_area);
     }
     /// Mention that trampoline is not collected by areas.
-    fn map_trampoline(&mut self) {
+    pub fn map_trampoline(&mut self) {
         self.page_table.map(
             VirtAddr::from(TRAMPOLINE).into(),
             PhysAddr::from(*S_TRAMPOLINE).into(),
             PTEFlags::R | PTEFlags::X,
         );
     }
-    /// Without kernel stacks.
-    pub fn new_kernel() -> Self {
-        let mut memory_set = Self::new_bare();
-        // map trampoline
-        memory_set.map_trampoline();
-        // map kernel sections
-        println!(".text [{:#x}, {:#x})", *S_TEXT, *E_TEXT);
-        println!(".rodata [{:#x}, {:#x})", *S_RODATA, *E_RODATA);
-        println!(".data [{:#x}, {:#x})", *S_DATA, *E_DATA);
-        println!(
-            ".bss [{:#x}, {:#x})",
-            *S_BSS, *E_BSS,
-        );
-        println!("mapping .text section");
-        memory_set.push(
-            MapArea::new(
-                (*S_TEXT).into(),
-                (*E_TEXT).into(),
-                MapType::Identical,
-                MapPermission::R | MapPermission::X,
-            ),
-            None,
-        );
-        println!("mapping .rodata section");
-        memory_set.push(
-            MapArea::new(
-                (*S_RODATA).into(),
-                (*E_RODATA).into(),
-                MapType::Identical,
-                MapPermission::R,
-            ),
-            None,
-        );
-        println!("mapping .data section");
-        memory_set.push(
-            MapArea::new(
-                (*S_DATA).into(),
-                (*E_DATA).into(),
-                MapType::Identical,
-                MapPermission::R | MapPermission::W,
-            ),
-            None,
-        );
-        println!("mapping .bss section");
-        memory_set.push(
-            MapArea::new(
-                (*S_BSS).into(),
-                (*E_BSS).into(),
-                MapType::Identical,
-                MapPermission::R | MapPermission::W,
-            ),
-            None,
-        );
-        println!("mapping physical memory");
-        memory_set.push(
-            MapArea::new(
-                (*E_KERNEL).into(),
-                MEMORY_END.into(),
-                MapType::Identical,
-                MapPermission::R | MapPermission::W,
-            ),
-            None,
-        );
-        memory_set
-    }
+
     /// Include sections in elf and trampoline and TrapContext and user stack,
     /// also returns user_sp and entry point.
     pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize) {
@@ -306,32 +238,3 @@ bitflags! {
     }
 }
 
-#[allow(unused)]
-pub fn remap_test() {
-    let mut kernel_space = KERNEL_SPACE.exclusive_access();
-    let mid_text: VirtAddr = ((*S_TEXT + *E_TEXT) / 2).into();
-    let mid_rodata: VirtAddr = ((*S_RODATA + *E_RODATA) / 2).into();
-    let mid_data: VirtAddr = ((*S_DATA + *E_DATA) / 2).into();
-    assert!(
-        !kernel_space
-            .page_table
-            .translate(mid_text.floor())
-            .unwrap()
-            .writable(),
-    );
-    assert!(
-        !kernel_space
-            .page_table
-            .translate(mid_rodata.floor())
-            .unwrap()
-            .writable(),
-    );
-    assert!(
-        !kernel_space
-            .page_table
-            .translate(mid_data.floor())
-            .unwrap()
-            .executable(),
-    );
-    println!("remap_test passed!");
-}
