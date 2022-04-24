@@ -8,6 +8,9 @@
 #![feature(core_panic)]
 #![feature(alloc_error_handler)]
 
+#![feature(atomic_from_mut)]
+#![feature(const_mut_refs)]
+
 #[macro_use]
 extern crate bitflags;
 extern crate alloc;
@@ -26,56 +29,46 @@ mod config;
 mod sync;
 mod cpu;
 mod loader;
+mod trap;
+mod task;
 
-
-
-const PRIMARY_HART_ID: usize = 0;
-
-use core::arch::global_asm;
+use core::{arch::global_asm, panicking::panic};
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
 
 #[no_mangle] // 不混淆符号名
-pub fn main_dispatcher(hart_id: usize, _device_tree_paddr: usize) -> ! {
-    unsafe { cpu::set_cpu_id(hart_id); }
+fn main_dispatcher(hart_id: usize, _device_tree_paddr: usize) -> ! {
+    cpu::set_cpu_id(hart_id);
 
-    static EARLY_BLOCK_INIT: spin::Once<()> = spin::Once::new();
-    EARLY_BLOCK_INIT.call_once(||{
-        // .bss must be cleaned firstly
-        mem::clean_bss();
-        logging::init();
-    });
-
-    // TODO: guest PRIMARY_HART_ID
-    if hart_id == PRIMARY_HART_ID {
-        primary_boot();
-    } else {
-        secondary_boot();
+    match hart_id {
+        cpu::PRIMARY_HART_ID => primary_boot(hart_id),
+        _                    => secondary_boot(hart_id),
     }
-    
-
-    // TODO: main loop
-    // loop{}
 
     sbi::shutdown();
 }
 
 
-fn primary_boot() {
-    info!("primary_boot starting...");
+fn primary_boot(hart_id: usize) {
+    // .bss must be cleaned firstly
+    mem::clean_bss();
+    logging::init();
 
-    mem::init();
+    info!("primary cpu {} booting...", hart_id);
+
+    // mem::init();
     
-    info!("primary_boot done.");
+    cpu::wake_secondary_cpus();
+
+    info!("primary cpu {} booting done.", hart_id);
 }
 
-fn secondary_boot() {
-    info!("secondary_boot starting...");
+fn secondary_boot(hart_id: usize) {
+    while !cpu::is_primary_boot_done() {}
 
-    info!("secondary_boot done.");
+    info!("secondary cpu {} booting...", hart_id);
 
-    let mut x = 1;
-    loop{
-        x += 1;
-    }
+    // mem::init();
+    
+    info!("secondary cpu {} booting done.", hart_id);
 }

@@ -75,6 +75,7 @@ pub fn send_ipi(sipi_value: usize) -> usize {
 }
 
 pub fn shutdown() -> ! {
+    info!("shutting down...");
     sbi_call(SBI_SHUTDOWN, 0, 0, 0, 0);
     unreachable!();
 }
@@ -91,6 +92,11 @@ pub fn hart_start(hartid: usize, start_addr: usize, opaque: usize) -> usize {
 
 /// stop executing the calling hart in supervisor-mode and return
 /// it’s ownership to the SBI implementation.
-pub fn hart_stop() -> usize {
-    sbi_call(HSM_EID, SBI_HART_STOP_FID, 0, 0, 0)
+pub fn hart_stop() -> ! {
+    let err_code = sbi_call(HSM_EID, SBI_HART_STOP_FID, 0, 0, 0);
+    unreachable!("{}", err_code);
+}
+
+pub fn hart_suspend() -> usize {
+    sbi_call(HSM_EID, SBI_HART_SUSPEND_FID, 0, 0, 0)
 }

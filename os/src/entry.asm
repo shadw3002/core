@@ -7,6 +7,12 @@ _start:
     slli t0, t0, 16
     la sp, boot_stack
     add sp, sp, t0
+
+	# 关中断, 不然无法 hart_stop
+	# csrw sie, zero
+
+    # BSS节清零
+
     call main_dispatcher
 
 # 分配初始化程序栈空间
